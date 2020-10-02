@@ -1,7 +1,7 @@
 #include "includes.h"
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-const char szProc[] = "Among us.exe";
+const char* szProc = "Among us.exe";
 uintptr_t gameAssemblyBase;
 
 HMODULE hDllModule;
@@ -14,11 +14,7 @@ ID3D11RenderTargetView* mainRenderTargetView;
 
 DWORD amongUsClientAddress;
 
-
 bool showMenu = false;
-
-PlayerControl_o* players[10];
-GameData_PlayerInfo_o* playerinfos[10];
 
 enum colors {
 	RED, BLUE, GREEN, PINK, ORANGE, YELLOW, BLACK, WHITE, PURPLE, BROWN, CYAN, LIME
@@ -93,7 +89,6 @@ void InitImGui() {
 }
 
 LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-
 	if (true && ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
 		return true;
 
@@ -101,12 +96,6 @@ LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 }
 
 bool init = false;
-
-bool rb_freeCosmetics = false;
-MemoryEditor memoryEditor;
-bool memoryViewer = false;
-bool showPlayerList = false;
-int selectedPetId;
 
 HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
 	if (!init) {
@@ -125,6 +114,9 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 		} else
 			return oPresent(pSwapChain, SyncInterval, Flags);
 	}
+	if (!showMenu) {
+		return oPresent(pSwapChain, SyncInterval, Flags);
+	}
 
 	auto pClient = *reinterpret_cast<AmongUsClient_c**>(amongUsClientAddress); //neuste 21399616 / 0x1468840
 	auto gamedata = pClient->static_fields->Instance->fields.GameDataPrefab->klass->static_fields->Instance;
@@ -132,15 +124,12 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 	if (gamedata != nullptr)
 		playerList = gamedata->fields.AllPlayers;
 
-	if (!showMenu) {
-		return oPresent(pSwapChain, SyncInterval, Flags);
-	}
-
+	
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Playerlist", &showPlayerList);
+	ImGui::Begin("Playerlist");
 	if (playerList != nullptr) {
 		for (int i = 0; i < playerList->fields._size; i++) {
 			auto player = playerList->fields._items->m_Items[i];
@@ -206,30 +195,7 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 }
 
 DWORD WINAPI MainThread(HMODULE hModule) {
-	PROCESSENTRY32 PE32{0};
-	PE32.dwSize = sizeof(PE32);
-
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hSnap == INVALID_HANDLE_VALUE) {
-		return 1;
-	}
-
-	DWORD PID = 0;
-	BOOL bRet = Process32First(hSnap, &PE32);
-	while (bRet) {
-		if (!_stricmp(szProc, PE32.szExeFile)) {
-			PID = PE32.th32ProcessID;
-			break;
-		}
-		bRet = Process32Next(hSnap, &PE32);
-	}
-
-	HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, PID);
-	if (!hProc) {
-		return 1;
-	}
-
-	gameAssemblyBase = GetModuleBaseAddress(PID, "GameAssembly.dll");
+	gameAssemblyBase = GetModuleBaseAddress(GetCurrentProcessId(),"GameAssembly.dll");
 	amongUsClientAddress = *(DWORD*)(patternScan("\x74\x39\xA1\x00\x00\x00\x00\x8B\x40\x5C", "xxx????xxx", gameAssemblyBase, gameAssemblyBase + 0x1000000) + 0x3);
 
 	bool init_hook = false;
