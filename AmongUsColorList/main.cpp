@@ -14,6 +14,8 @@ ID3D11RenderTargetView* mainRenderTargetView;
 
 DWORD amongUsClientAddress;
 
+RpcSetHat _rpcSetHat;
+
 bool showMenu = true;
 
 enum colors {
@@ -97,6 +99,8 @@ LRESULT __stdcall WndProc(const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 bool init = false;
 
+bool setHat = false;
+
 HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
 	if (!init) {
 		if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)& pDevice))) {
@@ -129,7 +133,16 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("Playerlist");
+	ImGui::Begin("Playerlist", 0, ImGuiWindowFlags_MenuBar);
+	if (ImGui::BeginMenuBar()) {
+		if (ImGui::BeginMenu("Options")) {
+			if (ImGui::MenuItem("Set hat")) {
+				setHat = !setHat;
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
 	if (playerList != nullptr) {
 		for (int i = 0; i < playerList->fields._size; i++) {
 			auto player = playerList->fields._items->m_Items[i];
@@ -142,43 +155,58 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 
 			std::string str_print = c;
 			str_print += " - ";
+			//str_print += std::to_string(player->fields.HatId) + " - "; helper to print out the hat id
+			
+			PlayerControl_o* playerControl = player->fields._object;
 
 			switch (colorId) {
 			case RED:
 				str_print += "Red";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 51);
 				break;
 			case BLUE:
 				str_print += "Blue";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 13);
 				break;
 			case GREEN:
 				str_print += "Green";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 3);
 				break;
 			case PINK:
 				str_print += "Pink";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 57);
 				break;
 			case ORANGE:
 				str_print += "Orange";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 53);
 				break;
 			case YELLOW:
 				str_print += "Yellow";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 50);
 				break;
 			case BLACK:
 				str_print += "Black";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 70);
 				break;
 			case WHITE:
 				str_print += "White";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 41);
 				break;
 			case PURPLE:
 				str_print += "Purple";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 64);
 				break;
 			case BROWN:
 				str_print += "Brown";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 4);
 				break;
 			case CYAN:
 				str_print += "Cyan";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 44);
 				break;
 			case LIME:
 				str_print += "Lime";
+				if (setHat && _rpcSetHat) _rpcSetHat(playerControl, 90);
 				break;
 			}
 
@@ -197,6 +225,7 @@ HRESULT __stdcall hkPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT 
 DWORD WINAPI MainThread(HMODULE hModule) {
 	gameAssemblyBase = GetModuleBaseAddress(GetCurrentProcessId(),"GameAssembly.dll");
 	amongUsClientAddress = *(DWORD*)(patternScan("\x74\x39\xA1\x00\x00\x00\x00\x8B\x40\x5C", "xxx????xxx", gameAssemblyBase, gameAssemblyBase + 0x1000000) + 0x3);
+	_rpcSetHat = (RpcSetHat)(patternScan("\x85\xC0\x74\x78\x56\x6A\x00\x50\xE8\x00\x00\x00\x00\x8B\x75\x08", "xxxxxxxxx????xxx", gameAssemblyBase, gameAssemblyBase + 0x10000000) - 0x2B);
 
 	bool init_hook = false;
 	do {
@@ -207,7 +236,7 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	}
 	while (!init_hook);
 
-	while (!GetAsyncKeyState(VK_END)) {
+	while (true) {
 		if (GetAsyncKeyState(VK_INSERT) & 1) {
 			showMenu = !showMenu;
 		}

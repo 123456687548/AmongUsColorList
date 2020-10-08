@@ -18,13 +18,10 @@ typedef HRESULT(__stdcall* Present) (IDXGISwapChain* pSwapChain, UINT SyncInterv
 typedef LRESULT(CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 typedef uintptr_t PTR;
 
-typedef void (__cdecl* RpcSetPet)(uintptr_t playerControl, int petId);
-extern RpcSetPet _rpcSetPet;
+typedef void (__cdecl* RpcSetHat)(PlayerControl_o* playerControl, int petId);
+extern RpcSetHat _rpcSetHat;
 
-typedef PlayerControl_o*(__cdecl* GetPlayerById)(void*, byte id);
+typedef GameData_PlayerInfo_o*(__cdecl* GetPlayerById)(void*, byte id);
 extern GetPlayerById _getPlayerById;
-
-typedef GameData_PlayerInfo_o* (__cdecl* GetPlayerInfo)(void*, byte id);
-extern GetPlayerInfo _getPlayerInfo;
 
 typedef System_Collections_Generic_List_GameData_PlayerInfo__o* PlayerListPtr;
