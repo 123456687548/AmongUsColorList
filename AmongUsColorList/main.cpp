@@ -14,7 +14,7 @@ ID3D11RenderTargetView* mainRenderTargetView;
 
 DWORD amongUsClientAddress;
 
-bool showMenu = false;
+bool showMenu = true;
 
 enum colors {
 	RED, BLUE, GREEN, PINK, ORANGE, YELLOW, BLACK, WHITE, PURPLE, BROWN, CYAN, LIME
@@ -215,7 +215,7 @@ DWORD WINAPI MainThread(HMODULE hModule) {
 	}
 
 	kiero::shutdown();
-	FreeLibraryAndExitThread(hDllModule, 0);
+	FreeLibraryAndExitThread(hDllModule, 0);//crashes game, no idea why
 }
 
 BOOL WINAPI DllMain(HMODULE hMod, DWORD dwReason, LPVOID lpReserved) {
